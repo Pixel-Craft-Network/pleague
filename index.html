@@ -1,18 +1,172 @@
 <!doctype html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <link rel="preload" href="forced_square.woff2" as="font" type="font/woff2" crossorigin="anonymous"/>
-        <link rel="preload" href="images/logo.jpg" as="image" type="image/svg+xml"/>
-        <link rel="preload" href="images/discord.svg" as="image" type="image/svg+xml"/>
-        <link rel="manifest" href="manifest.json"/>
-        <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
-        <script defer="defer" src="error_screen.bundle.js"></script>
-        <script defer="defer" src="main.bundle.js"></script>
-    </head>
-    <body>
-        <canvas id="screen"></canvas>
-        <div id="ui"></div>
-        <div id="transition-layer"></div>
-    </body>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#080d18" />
+    <meta name="description" content="Pixel League — boost, flip, and score in a pixel-powered car soccer arena." />
+    <title>Pixel League — Boost. Flip. Score.</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main id="viewport" class="viewport" aria-label="Pixel League game">
+      <canvas id="game-canvas" width="960" height="540" aria-label="Pixel League arena"></canvas>
+
+      <div class="ambient-grain" aria-hidden="true"></div>
+      <header class="topbar">
+        <a class="brand" href="#home" id="brand-home" aria-label="Pixel League home">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span class="brand-name">PIXEL<span>LEAGUE</span></span>
+        </a>
+        <div class="top-actions">
+          <button class="quiet-button" id="how-to-play" type="button"><span class="button-icon">?</span> HOW TO PLAY</button>
+          <button class="quiet-button sound-button" id="sound-toggle" type="button" aria-pressed="true"><span class="sound-icon">♫</span><span id="sound-label">SOUND ON</span></button>
+        </div>
+      </header>
+
+      <section class="menu-screen" id="menu-screen" aria-label="Main menu">
+        <div class="menu-panel">
+          <div class="season-tag"><span class="status-dot"></span> ARCADE SPORTS <span class="tag-divider">/</span> SEASON 01</div>
+          <h1>PIXEL<br /><span>LEAGUE</span></h1>
+          <p class="hero-copy">Small pixels.<br /><strong>Big plays.</strong></p>
+          <div class="hero-rule"><span></span><small>BOOST · FLIP · SCORE</small></div>
+
+          <div class="setup-card">
+            <div class="setup-heading"><span>MATCH SETUP</span><span class="setup-saved"><span class="saved-dot"></span> LOCAL LOBBY</span></div>
+            <div class="setup-grid">
+              <label class="setting-field">
+                <span>FORMAT</span>
+                <select id="mode-select" aria-label="Match format">
+                  <option value="1v1">1 v 1 · DUEL</option>
+                  <option value="2v2">2 v 2 · DOUBLES</option>
+                </select>
+              </label>
+              <label class="setting-field">
+                <span>ARENA</span>
+                <select id="arena-select" aria-label="Arena">
+                  <option value="neon">NEON DOME</option>
+                  <option value="sunset">SUNSET CIRCUIT</option>
+                  <option value="frost">FROSTBYTE FIELD</option>
+                </select>
+              </label>
+              <label class="setting-field">
+                <span>TIME</span>
+                <select id="time-select" aria-label="Match length">
+                  <option value="180">3 MIN · STANDARD</option>
+                  <option value="90">90 SEC · QUICK</option>
+                </select>
+              </label>
+              <label class="setting-field">
+                <span>BOT SKILL</span>
+                <select id="skill-select" aria-label="Opponent difficulty">
+                  <option value="rookie">ROOKIE</option>
+                  <option value="pro" selected>PRO</option>
+                  <option value="ace">ACE</option>
+                </select>
+              </label>
+            </div>
+            <div class="team-choice-row">
+              <span class="setting-caption">YOUR SIDE</span>
+              <div class="team-picker" role="group" aria-label="Choose your team">
+                <button type="button" data-team="blue" class="team-choice is-selected"><span class="team-swatch blue-swatch"></span> SKY</button>
+                <button type="button" data-team="orange" class="team-choice"><span class="team-swatch orange-swatch"></span> SUN</button>
+              </div>
+            </div>
+          </div>
+
+          <button class="play-button" id="play-button" type="button">
+            <span class="play-button-copy"><strong>PLAY MATCH</strong><small>ENTER THE ARENA</small></span>
+            <span class="play-arrow" aria-hidden="true">↗</span>
+          </button>
+          <div class="menu-footnote"><span>✦</span> SOLO QUEUE <span class="footnote-separator">·</span> BOT OPPONENTS <span class="footnote-separator">·</span> NO WAITING</div>
+        </div>
+
+        <div class="arena-callout" aria-hidden="true">
+          <span class="callout-line"></span><span><b>NEON DOME</b><small>THE LIGHTS ARE YOURS</small></span>
+        </div>
+        <div class="version-pill"><span class="status-dot"></span> PLAYABLE BUILD <span class="version-divider">·</span> 01.01</div>
+      </section>
+
+      <section class="match-ui is-hidden" id="match-ui" aria-label="Match information">
+        <div class="match-label" id="match-label"><span class="live-dot"></span> LIVE MATCH <small>·</small> NEON DOME</div>
+        <div class="scoreboard" aria-live="polite">
+          <div class="score-side blue-side"><span class="score-team-name" id="blue-name">SKY</span><strong id="blue-score">0</strong></div>
+          <div class="score-center"><span id="clock">3:00</span><small id="clock-state">KICKOFF</small></div>
+          <div class="score-side orange-side"><strong id="orange-score">0</strong><span class="score-team-name" id="orange-name">SUN</span></div>
+        </div>
+        <button class="pause-button" id="pause-button" type="button" aria-label="Pause match"><span></span><span></span></button>
+
+        <div class="match-controls-hint" id="match-controls-hint">
+          <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> DRIVE</span>
+          <i></i><span><kbd>SPACE</kbd> JUMP / DODGE</span><i></i><span><kbd>SHIFT</kbd> BOOST</span>
+        </div>
+        <div class="boost-meter" aria-label="Boost level">
+          <div class="boost-topline"><span>BOOST</span><strong id="boost-number">33</strong></div>
+          <div class="boost-segments" id="boost-segments" aria-hidden="true"></div>
+          <small>SHIFT TO IGNITE</small>
+        </div>
+      </section>
+
+      <div class="center-callout is-hidden" id="center-callout" aria-live="assertive">
+        <span class="callout-eyebrow" id="callout-eyebrow">KICKOFF</span>
+        <strong id="callout-title">3</strong>
+        <small id="callout-subtitle">FIRST TO THE BALL</small>
+      </div>
+
+      <div class="modal-backdrop is-hidden" id="pause-modal" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+        <div class="modal-card">
+          <div class="modal-topline"><span class="season-tag">PAUSED · LOCAL MATCH</span><button class="modal-close" data-action="resume" type="button" aria-label="Resume">×</button></div>
+          <h2 id="pause-title">TAKE A BREATHER.</h2>
+          <p>The arena will be right here.</p>
+          <div class="modal-actions">
+            <button class="play-button compact" data-action="resume" type="button"><span class="play-button-copy"><strong>BACK TO MATCH</strong><small>GET BACK OUT THERE</small></span><span class="play-arrow">↗</span></button>
+            <button class="secondary-button" data-action="restart" type="button">RESTART MATCH <span>↻</span></button>
+            <button class="text-button" data-action="leave" type="button">LEAVE TO MENU</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-backdrop is-hidden" id="result-modal" role="dialog" aria-modal="true" aria-labelledby="result-title">
+        <div class="modal-card result-card">
+          <div class="season-tag"><span class="status-dot"></span> FINAL WHISTLE</div>
+          <div class="result-kicker" id="result-kicker">MATCH COMPLETE</div>
+          <h2 id="result-title">WHAT A GAME.</h2>
+          <div class="final-score"><span class="final-team blue-text">SKY</span><strong id="final-blue">0</strong><i>—</i><strong id="final-orange">0</strong><span class="final-team orange-text">SUN</span></div>
+          <p id="result-copy">Every touch counts. Run it back?</p>
+          <div class="modal-actions">
+            <button class="play-button compact" data-action="rematch" type="button"><span class="play-button-copy"><strong>REMATCH</strong><small>SAME SETTINGS</small></span><span class="play-arrow">↗</span></button>
+            <button class="secondary-button" data-action="leave" type="button">BACK TO MENU <span>↗</span></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="help-backdrop is-hidden" id="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
+        <div class="help-card">
+          <button class="modal-close" id="help-close" type="button" aria-label="Close controls">×</button>
+          <div class="season-tag"><span class="status-dot"></span> PILOT'S HANDBOOK</div>
+          <h2 id="help-title">MAKE THE PLAY.</h2>
+          <p>Drive the pitch, meet the ball, and send it into the other team's goal. Your second jump is a dodge — aim it with your steering.</p>
+          <div class="help-grid">
+            <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>DRIVE & STEER</span></div>
+            <div><kbd>SPACE</kbd><span>JUMP, THEN DODGE</span></div>
+            <div><kbd>SHIFT</kbd><span>BURN BOOST</span></div>
+            <div><kbd>ESC</kbd><span>PAUSE / RESUME</span></div>
+          </div>
+          <div class="help-note"><span>✦</span> Grab glowing boost pads. Pickups respawn after a short cooldown.</div>
+          <button class="secondary-button" id="help-done" type="button">GOT IT <span>✓</span></button>
+        </div>
+      </div>
+
+      <div class="touch-controls is-hidden" id="touch-controls" aria-label="Touch controls">
+        <div class="touch-stick-wrap"><div class="touch-stick" id="touch-stick"><div class="stick-knob" id="stick-knob"></div></div><span>STEER + DRIVE</span></div>
+        <div class="touch-actions">
+          <button class="touch-action boost-touch" id="touch-boost" type="button"><strong>BOOST</strong><span>HOLD</span></button>
+          <button class="touch-action jump-touch" id="touch-jump" type="button"><strong>JUMP</strong><span>DOUBLE TAP · DODGE</span></button>
+        </div>
+      </div>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </main>
+    <script type="module" src="./src/main.js"></script>
+  </body>
 </html>
